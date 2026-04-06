@@ -159,6 +159,9 @@ io.on('connection', (socket) => {
       const pName = room.players[playerIdx].name;
       room.players.splice(playerIdx, 1);
       
+      const s = io.sockets.sockets.get(socketId);
+      if (s) s.leave(roomId);
+
       // Reset game board if someone leaves and only 1 player remains
       if (room.players.length === 1) {
         room.board = createEmptyBoard();
