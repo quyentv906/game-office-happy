@@ -25,6 +25,16 @@ export const mockGames: Game[] = [
     colorTo: "to-orange-500"
   },
   {
+    id: "tank-battle",
+    title: "Bắn Tăng 2D",
+    description: "Multiplayer thời gian thực, di chuyển linh hoạt, bắn súng cực mượt.",
+    category: "online",
+    tag: "HOT",
+    link: "/games/tank",
+    colorFrom: "from-green-500",
+    colorTo: "to-teal-600"
+  },
+  {
     id: "chess-online",
     title: "Cờ Vua Online",
     description: "Đấu trí căng thẳng cùng hàng ngàn kỳ thủ.",

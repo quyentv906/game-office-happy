@@ -15,6 +15,8 @@ const io = new Server(server, {
   }
 });
 
+require('./tankIo')(io);
+
 /**
  * Game state:
  * rooms = {
