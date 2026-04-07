@@ -27,6 +27,7 @@ export function useCaroSocket(roomId?: string, userName?: string) {
   const [lastMove, setLastMove] = useState<{ row: number, col: number } | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [errorEvent, setErrorEvent] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
 
   useEffect(() => {
     // Initialize single socket connection
@@ -35,6 +36,11 @@ export function useCaroSocket(roomId?: string, userName?: string) {
     }
     const currentSocket = socketInstance;
     setSocket(currentSocket);
+
+    // Track connection state
+    setIsConnected(currentSocket.connected);
+    currentSocket.on("connect", () => setIsConnected(true));
+    currentSocket.on("disconnect", () => setIsConnected(false));
 
     // Common listeners
     currentSocket.on("room_list", (data) => {
@@ -94,6 +100,8 @@ export function useCaroSocket(roomId?: string, userName?: string) {
     }
 
     return () => {
+      currentSocket.off("connect");
+      currentSocket.off("disconnect");
       currentSocket.off("room_list");
       currentSocket.off("room_joined");
       currentSocket.off("your_role");
@@ -150,6 +158,7 @@ export function useCaroSocket(roomId?: string, userName?: string) {
     winner,
     messages,
     errorEvent,
+    isConnected,
     makeMove,
     notifyWin,
     sendMessage,

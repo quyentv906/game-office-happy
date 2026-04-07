@@ -60,6 +60,7 @@ export function useTankSocket(roomId?: string, userName?: string, vehicle?: stri
   const [errorEvent, setErrorEvent] = useState<string | null>(null);
   const [mapDef, setMapDef] = useState<{width: number, height: number, type?: string, maxPlayers?: number} | null>(null);
   const [eventLog, setEventLog] = useState<{msg: string, id: number}[]>([]);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
 
   useEffect(() => {
     if (!tankSocket) {
@@ -67,6 +68,11 @@ export function useTankSocket(roomId?: string, userName?: string, vehicle?: stri
     }
     const currentSocket = tankSocket;
     setSocket(currentSocket);
+
+    // Track connection state
+    setIsConnected(currentSocket.connected);
+    currentSocket.on("connect", () => setIsConnected(true));
+    currentSocket.on("disconnect", () => setIsConnected(false));
 
     currentSocket.on("tank_room_list", (data: TankRoom[]) => {
       setRooms(data);
@@ -99,6 +105,8 @@ export function useTankSocket(roomId?: string, userName?: string, vehicle?: stri
     }
 
     return () => {
+      currentSocket.off("connect");
+      currentSocket.off("disconnect");
       currentSocket.off("tank_room_list");
       currentSocket.off("tank_joined");
       currentSocket.off("tank_state");
@@ -139,6 +147,7 @@ export function useTankSocket(roomId?: string, userName?: string, vehicle?: stri
     errorEvent,
     mapDef,
     eventLog,
+    isConnected,
     createRoom,
     leaveRoom,
     sendInput,

@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import { useCaroStore } from "../store/useCaroStore";
 import { useCaroSocket } from "../hooks/useCaroSocket";
 import PlayerModal from "./PlayerModal";
-import { PlusCircle, Shuffle, Lock, Gamepad2, Users } from "lucide-react";
+import { PlusCircle, Shuffle, Lock, Gamepad2, Users, Loader2 } from "lucide-react";
 
 export default function RoomList() {
   const router = useRouter();
   const { userName } = useCaroStore();
-  const { socket, rooms, createRoom } = useCaroSocket();
+  const { socket, rooms, createRoom, isConnected } = useCaroSocket();
   const [showModal, setShowModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<"create" | "joinRandom" | string | null>(null);
 
@@ -75,15 +75,22 @@ export default function RoomList() {
         </div>
         
         <div className="flex items-center gap-4">
+          {!isConnected && (
+            <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-4 py-2 rounded-xl font-medium text-sm animate-pulse">
+              <Loader2 className="w-4 h-4 animate-spin" /> Đang kết nối server...
+            </div>
+          )}
           <button 
             onClick={() => handleAction("joinRandom")}
-            className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-3 rounded-xl font-bold transition-all"
+            disabled={!isConnected}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${!isConnected ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
           >
             <Shuffle className="w-5 h-5" /> Vào Ngẫu Nhiên
           </button>
           <button 
             onClick={() => handleAction("create")}
-            className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-500 hover:opacity-90 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-purple-500/30 transition-all"
+            disabled={!isConnected}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold shadow-lg transition-all ${!isConnected ? 'bg-slate-300 text-slate-400 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-purple-600 to-blue-500 hover:opacity-90 text-white shadow-purple-500/30'}`}
           >
             <PlusCircle className="w-5 h-5" /> Tạo Phòng Mới
           </button>

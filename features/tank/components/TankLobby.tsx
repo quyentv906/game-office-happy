@@ -4,12 +4,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTankStore } from "../store/useTankStore";
 import { useTankSocket } from "../hooks/useTankSocket";
-import { PlusCircle, Shuffle, Lock, Gamepad2, Users, Target } from "lucide-react";
+import { PlusCircle, Shuffle, Lock, Gamepad2, Users, Target, Loader2 } from "lucide-react";
 
 export default function TankLobby() {
   const router = useRouter();
   const { userName, vehicle, setUserName, setVehicle } = useTankStore();
-  const { socket, rooms, createRoom } = useTankSocket();
+  const { socket, rooms, createRoom, isConnected } = useTankSocket();
   const [showModal, setShowModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createMaxPlayers, setCreateMaxPlayers] = useState(5);
@@ -178,15 +178,22 @@ export default function TankLobby() {
         </div>
         
         <div className="flex items-center gap-4">
+          {!isConnected && (
+            <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-4 py-2 rounded-xl font-medium text-sm animate-pulse">
+              <Loader2 className="w-4 h-4 animate-spin" /> Đang kết nối server...
+            </div>
+          )}
           <button 
             onClick={() => handleAction("joinRandom")}
-            className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-3 rounded-xl font-bold transition-all"
+            disabled={!isConnected}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${!isConnected ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
           >
             <Shuffle className="w-5 h-5" /> Vào Ngẫu Nhiên
           </button>
           <button 
             onClick={() => handleAction("create")}
-            className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-500 hover:opacity-90 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-green-500/30 transition-all"
+            disabled={!isConnected}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold shadow-lg transition-all ${!isConnected ? 'bg-slate-300 text-slate-400 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-green-600 to-emerald-500 hover:opacity-90 text-white shadow-green-500/30'}`}
           >
             <PlusCircle className="w-5 h-5" /> Tạo Phòng
           </button>
