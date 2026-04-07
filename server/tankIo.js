@@ -24,10 +24,20 @@ function checkCircleCollision(x1, y1, r1, x2, y2, r2) {
   return (dx*dx) + (dy*dy) <= (r1 + r2) * (r1 + r2);
 }
 
-function generateObstacles() {
+function generateObstacles(mapType) {
   const obstacles = [];
   for (let i = 0; i < 20; i++) {
-    const type = Math.random() > 0.5 ? 'rock' : 'tree';
+    let type = 'rock';
+    if (mapType === 'billiard') {
+      const num = Math.floor(Math.random() * 9) + 1;
+      type = `billiard_${num}`;
+    } else if (mapType === 'basketball') {
+      type = 'basketball';
+    } else if (mapType === 'football') {
+      type = 'ball'; // Chỉ render bóng
+    } else {
+      type = Math.random() > 0.5 ? 'rock' : 'tree';
+    }
     // Size approx 160x160 (double from before)
     const x = Math.random() * (MAP_WIDTH - 400) + 200;
     const y = Math.random() * (MAP_HEIGHT - 400) + 200;
@@ -69,8 +79,9 @@ function updateRoom(roomId, io) {
     // Collision with Obstacles
     for (let j = room.obstacles.length - 1; j >= 0; j--) {
       const obs = room.obstacles[j];
-      // obs radius 25, bullet radius 5
-      if (checkCircleCollision(b.x, b.y, 5, obs.x, obs.y, 25)) {
+      // obs hitbox
+      const hitRadius = 35;
+      if (checkCircleCollision(b.x, b.y, 5, obs.x, obs.y, hitRadius)) {
         obs.hp--;
         if (obs.hp <= 0) room.obstacles.splice(j, 1);
         room.bullets.splice(i, 1);
@@ -154,16 +165,18 @@ function updateRoom(roomId, io) {
     let collisionY = false;
     
     // Physics collision with objects (Circles)
-    // tank radius 15, obstacles radius 25
+    // tank radius 15, obstacles radius
     for (const obs of room.obstacles) {
-      if (checkCircleCollision(newX, p.y, 15, obs.x, obs.y, 25)) { collisionX = true; break; }
+      const hitRadius = 35;
+      if (checkCircleCollision(newX, p.y, 15, obs.x, obs.y, hitRadius)) { collisionX = true; break; }
     }
     
     for (const obs of room.obstacles) {
-      if (checkCircleCollision(p.x, newY, 15, obs.x, obs.y, 25)) { collisionY = true; break; }
+      const hitRadius = 35;
+      if (checkCircleCollision(p.x, newY, 15, obs.x, obs.y, hitRadius)) { collisionY = true; break; }
     }
 
-    // Bounds check and apply X
+    // Map bounds check and apply X
     if (!collisionX) {
       if (newX > 30 && newX < MAP_WIDTH - 30) p.x = newX;
     } else {
@@ -186,7 +199,7 @@ function updateRoom(roomId, io) {
   // Obstacle respawn
   if (now > room.lastObstacleSpawn + 15000) {
     if (room.obstacles.length < 20) {
-      room.obstacles.push(...generateObstacles().slice(0, 5));
+      room.obstacles.push(...generateObstacles(room.mapType).slice(0, 5));
     }
     room.lastObstacleSpawn = now;
   }
@@ -213,6 +226,8 @@ module.exports = (io) => {
     const list = Object.keys(rooms).map(id => ({
       roomId: id,
       playerCount: Object.keys(rooms[id].players).length,
+      maxPlayers: rooms[id].maxPlayers,
+      mapType: rooms[id].mapType,
       isLocked: rooms[id].isLocked
     }));
     io.emit('tank_room_list', list);
@@ -223,13 +238,16 @@ module.exports = (io) => {
       broadcastRoomList();
     });
 
-    socket.on('tank_create_room', () => {
+    socket.on('tank_create_room', (options) => {
       const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const mapType = options?.mapType || 'football';
       rooms[roomId] = {
         id: roomId,
+        maxPlayers: options?.maxPlayers || 5,
+        mapType: mapType,
         players: {},
         bullets: [],
-        obstacles: generateObstacles(),
+        obstacles: generateObstacles(mapType),
         isLocked: false,
         lastObstacleSpawn: Date.now()
       };
@@ -243,7 +261,7 @@ module.exports = (io) => {
         socket.emit('tank_error', 'Phòng không tồn tại');
         return;
       }
-      if (room.isLocked || Object.keys(room.players).length >= MAX_PLAYERS) {
+      if (room.isLocked || Object.keys(room.players).length >= room.maxPlayers) {
         socket.emit('tank_error', 'Phòng đã đầy hoặc bị khóa');
         return;
       }
@@ -269,11 +287,11 @@ module.exports = (io) => {
         respawnTime: 0
       };
 
-      if (Object.keys(room.players).length === MAX_PLAYERS) {
+      if (Object.keys(room.players).length === room.maxPlayers) {
         room.isLocked = true;
       }
 
-      socket.emit('tank_joined', { roomId, myId: socket.id, map: { width: MAP_WIDTH, height: MAP_HEIGHT }});
+      socket.emit('tank_joined', { roomId, myId: socket.id, map: { width: MAP_WIDTH, height: MAP_HEIGHT, type: room.mapType, maxPlayers: room.maxPlayers }});
       broadcastRoomList();
     });
 

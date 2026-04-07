@@ -11,6 +11,9 @@ export default function TankLobby() {
   const { userName, vehicle, setUserName, setVehicle } = useTankStore();
   const { socket, rooms, createRoom } = useTankSocket();
   const [showModal, setShowModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createMaxPlayers, setCreateMaxPlayers] = useState(5);
+  const [createMapType, setCreateMapType] = useState('football');
   const [pendingAction, setPendingAction] = useState<"create" | "joinRandom" | string | null>(null);
 
   const [tempName, setTempName] = useState(userName);
@@ -42,7 +45,7 @@ export default function TankLobby() {
 
   const executeAction = (action: string) => {
     if (action === "create") {
-      createRoom();
+      setShowCreateModal(true);
     } else if (action === "joinRandom") {
       const waitRooms = rooms.filter(r => !r.isLocked);
       if (waitRooms.length > 0) {
@@ -63,6 +66,11 @@ export default function TankLobby() {
     setVehicle(tempVehicle);
     setShowModal(false);
     if (pendingAction) executeAction(pendingAction);
+  };
+
+  const handleCreateConfirm = () => {
+    createRoom({ maxPlayers: createMaxPlayers, mapType: createMapType });
+    setShowCreateModal(false);
   };
 
   return (
@@ -109,6 +117,57 @@ export default function TankLobby() {
         </div>
       )}
 
+      {/* Create Room Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 md:p-8 shadow-2xl animate-in zoom-in-95">
+            <h2 className="text-2xl font-black text-slate-800 mb-6 flex items-center gap-2">
+              <PlusCircle className="w-8 h-8 text-green-600" /> Tạo Phòng Mới
+            </h2>
+            <div className="space-y-4 mb-8">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Số người tối đa (2-10)</label>
+                <input 
+                  type="number" 
+                  min={2}
+                  max={10}
+                  value={createMaxPlayers}
+                  onChange={e => setCreateMaxPlayers(Math.max(2, Math.min(10, parseInt(e.target.value) || 2)))}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 outline-none transition-all font-medium text-slate-800"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Bản Đồ</label>
+                <select 
+                  value={createMapType} 
+                  onChange={(e: any) => setCreateMapType(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 outline-none transition-all font-medium text-slate-800 bg-white"
+                >
+                  <option value="notebook">Vở 5 Ô ly</option>
+                  <option value="football">Sân Đá Banh</option>
+                  <option value="basketball">Sân Bóng Rổ</option>
+                  <option value="billiard">Bàn Bi-a</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowCreateModal(false)}
+                className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-lg transition-all"
+              >
+                Hủy
+              </button>
+              <button 
+                onClick={handleCreateConfirm}
+                className="flex-1 py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-green-500/30 transition-all hover:scale-[1.02]"
+              >
+                Vào Phòng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Lobby Header */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
         <div>
@@ -147,7 +206,8 @@ export default function TankLobby() {
                 <Users className="w-8 h-8" />
               </div>
               <h3 className="text-xl font-bold text-slate-800 mb-1">Phòng #{room.roomId}</h3>
-              <p className="text-slate-500 mb-6">{room.playerCount}/6 Người chơi</p>
+              <p className="text-slate-500 mb-1">{room.playerCount}/{room.maxPlayers} Người chơi</p>
+              <p className="text-xs text-slate-400 mb-6 font-medium">Bản đồ: {room.mapType === 'billiard' ? 'Bàn Bi-a' : room.mapType === 'basketball' ? 'Bóng rổ' : room.mapType === 'football' ? 'Bóng đá' : 'Vở ô ly'}</p>
               
               {room.isLocked ? (
                 <button disabled className="w-full py-3 bg-slate-100 text-slate-400 rounded-xl font-bold flex items-center justify-center gap-2 cursor-not-allowed">

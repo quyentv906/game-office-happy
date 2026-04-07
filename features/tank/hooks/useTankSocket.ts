@@ -27,7 +27,7 @@ export interface Bullet {
 
 export interface Obstacle {
   id: string;
-  type: 'rock' | 'tree' | 'grass';
+  type: 'rock' | 'tree' | 'grass' | 'ball' | 'basketball' | `billiard_${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9}`;
   x: number;
   y: number;
   width: number;
@@ -44,6 +44,8 @@ export interface GameState {
 export interface TankRoom {
   roomId: string;
   playerCount: number;
+  maxPlayers: number;
+  mapType: string;
   isLocked: boolean;
 }
 
@@ -56,7 +58,7 @@ export function useTankSocket(roomId?: string, userName?: string, vehicle?: stri
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [myId, setMyId] = useState<string>('');
   const [errorEvent, setErrorEvent] = useState<string | null>(null);
-  const [mapDef, setMapDef] = useState<{width: number, height: number} | null>(null);
+  const [mapDef, setMapDef] = useState<{width: number, height: number, type?: string, maxPlayers?: number} | null>(null);
   const [eventLog, setEventLog] = useState<{msg: string, id: number}[]>([]);
 
   useEffect(() => {
@@ -105,9 +107,9 @@ export function useTankSocket(roomId?: string, userName?: string, vehicle?: stri
     };
   }, [roomId, userName, vehicle]);
 
-  const createRoom = () => {
+  const createRoom = (options?: { maxPlayers: number; mapType: string }) => {
     if (tankSocket) {
-      tankSocket.emit("tank_create_room");
+      tankSocket.emit("tank_create_room", options);
     }
   };
 

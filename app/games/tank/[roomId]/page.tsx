@@ -88,7 +88,7 @@ export default function TankGamePage({ params }: { params: { roomId: string } })
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-green-400 bg-green-900/40 px-3 py-1.5 rounded-lg">
             <Users className="w-5 h-5" />
-            <span className="font-bold">{px}/6</span>
+            <span className="font-bold">{px}/{mapDef.maxPlayers || 5}</span>
           </div>
           <button onClick={() => setShowLeaderboard(!showLeaderboard)} className={`p-2 rounded-xl transition-all ${showLeaderboard ? 'bg-amber-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
              <Trophy className="w-5 h-5"/>
